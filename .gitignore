@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+certificates
+# fetched by scripts/fetch-ears.mjs
+public/vendor
+public/models/*.tar.gz

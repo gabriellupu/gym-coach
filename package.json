@@ -1,0 +1,34 @@
+{
+  "name": "gym-coach",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/fetch-ears.mjs",
+    "dev": "next dev",
+    "dev:https": "next dev --experimental-https -H 0.0.0.0",
+    "prebuild": "node scripts/fetch-ears.mjs",
+    "build": "next build",
+    "start": "npx serve out",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "fetch:ears": "node scripts/fetch-ears.mjs",
+    "build:voice": "tsx scripts/build-voice.ts"
+  },
+  "dependencies": {
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.187.0",
+    "vosk-browser": "^0.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "iwer": "^2.8.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

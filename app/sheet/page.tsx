@@ -22,7 +22,7 @@ export default function Sheet() {
     renderer.setClearColor(0x0b0e14);
     const human = q.has('human');
     const demos = ids.map((id) => {
-      const demo = new DemoScene(human ? { human: '/models/coach.glb' } : {});
+      const demo = new DemoScene(human ? { human: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/models/coach.glb` } : {});
       demo.orbit = 0;
       demo.set(id);
       if (q.get('az')) (demo as unknown as { az: number }).az = (Number(q.get('az')) * Math.PI) / 180;

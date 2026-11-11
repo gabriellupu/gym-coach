@@ -185,7 +185,7 @@ export class Figure {
   apply(pose: Pose) {
     const s = (this.solved = solve(pose));
     if (this.human) {
-      this.human.setGrip(this.anim.db ? 1 : 0);
+      this.human.setGrip(this.anim.db || this.anim.grip ? 1 : 0);
       this.human.draw(s);
     } else this.stick.draw(s);
 

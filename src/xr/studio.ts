@@ -677,7 +677,8 @@ export class Studio implements Stage {
         const right = new THREE.Vector3().crossVectors(g, UP);
         if (right.lengthSq() < 0.01) right.set(1, 0, 0);
         right.normalize();
-        goal.pos.copy(this.head).addScaledVector(g, 1.25).addScaledVector(right, 0.32);
+        goal.pos.copy(this.head).addScaledVector(g, 1.25).addScaledVector(right, 0.5);
+        goal.pos.y -= 0.12;
         goal.pos.y = Math.max(0.35, goal.pos.y);
         goal.scale = 0.72;
       }
@@ -688,7 +689,9 @@ export class Studio implements Stage {
       const d = to.length() || 1;
       to.divideScalar(d);
       const right = new THREE.Vector3().crossVectors(to, UP);
-      goal.pos.copy(c).addScaledVector(right, 1.05).addScaledVector(to, -0.15).setY(1.42);
+      // A coach lying along the bench needs more room than one standing.
+      const wide = this.station === 'bench' ? 1.75 : 1.05;
+      goal.pos.copy(c).addScaledVector(right, wide).addScaledVector(to, -0.15).setY(this.station === 'bench' ? 1.55 : 1.42);
       goal.scale = Math.max(0.8, Math.min(1.5, d / 2.3));
       goal.quat.setFromRotationMatrix(new THREE.Matrix4().lookAt(new THREE.Vector3(this.head.x, goal.pos.y + 0.1, this.head.z), goal.pos, UP));
     }

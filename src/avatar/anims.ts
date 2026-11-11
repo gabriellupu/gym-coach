@@ -17,6 +17,8 @@ export interface Anim {
   dbAxis?: 'x' | 'y' | 'z' | 'arm';
   /** Camera azimuth (degrees round the figure, 0 = front) for the on-board view. */
   cam?: number;
+  /** Hands closed round a bar. */
+  grip?: boolean;
 }
 
 const F = DIM.footH;
@@ -265,13 +267,13 @@ export const ANIMS: Record<string, (c: Ctx) => Anim> = {
     return { cam: 20, keys: [[0, p(1)], [0.5, p(-1)]] };
   },
   // ── Pull-up bar ──
-  pullup: (c) => ({ cam: 160, keys: cycle(hang(c, 0.32, 0), hang(c, 0.32, 0.5), 0.06) }),
-  chinup: (c) => ({ cam: 160, keys: cycle(hang(c, 0.2, 0), hang(c, 0.2, 0.5, { armL: { to: [0.2, c.barH, 0], pole: [0.3, -0.6, 1] }, armR: { to: [-0.2, c.barH, 0], pole: [-0.3, -0.6, 1] } }), 0.06) }),
+  pullup: (c) => ({ cam: 160, grip: true, keys: cycle(hang(c, 0.32, 0), hang(c, 0.32, 0.5), 0.06) }),
+  chinup: (c) => ({ cam: 160, grip: true, keys: cycle(hang(c, 0.2, 0), hang(c, 0.2, 0.5, { armL: { to: [0.2, c.barH, 0], pole: [0.3, -0.6, 1] }, armR: { to: [-0.2, c.barH, 0], pole: [-0.3, -0.6, 1] } }), 0.06) }),
   knee_raise: (c) => {
     const tuck: Limb = { raise: 105, bend: 118 };
-    return { cam: 120, keys: cycle(hang(c, 0.3, 0), hang(c, 0.3, 0, { legL: tuck, legR: tuck, spine: 14, pos: [0, c.barH - ARM + 0.01 - TORSO, -0.03] }), 0.08) };
+    return { cam: 120, grip: true, keys: cycle(hang(c, 0.3, 0), hang(c, 0.3, 0, { legL: tuck, legR: tuck, spine: 14, pos: [0, c.barH - ARM + 0.01 - TORSO, -0.03] }), 0.08) };
   },
-  dead_hang: (c) => ({ cam: 160, keys: [[0, hang(c, 0.3, 0, { side: -1.5 })], [0.5, hang(c, 0.3, 0, { side: 1.5 })]] }),
+  dead_hang: (c) => ({ cam: 160, grip: true, keys: [[0, hang(c, 0.3, 0, { side: -1.5 })], [0.5, hang(c, 0.3, 0, { side: 1.5 })]] }),
   // ── Warm-up ──
   jumping_jack: () => {
     const legs = (o: number): Pick<Pose, 'legL' | 'legR'> => ({ legL: { out: o, bend: 4 }, legR: { out: o, bend: 4 } });

@@ -11,6 +11,9 @@ V1 covers an **adjustable bench** (the centrepiece), **dumbbells**, a **mat**, a
 | **The board** | A floating panel with a looping **stickman** animation of the current move, the rep count / timer, a live range-of-motion gauge, captions and buttons. It stands beside the coach, and drifts into view when you are lying on the bench or the floor. |
 | **Rep counting** | Reps are read from head and hand tracking (squat depth, press height, pull-up height…), scaled to your standing height. Half reps do not count; shallow or rushed reps get a form cue. Moves the headset cannot see (hip thrust, leg raises) are paced by the coach's count, as is any set where your hands drop out of tracking. Holds only run the clock while you are in position. |
 | **Voice** | *"I'm ready"*, *"I need a break"*, *"skip"*, *"show me again"*, *"too easy / too hard"*, *"how many left"*, *"I'm done"*, *"end workout"*, *"start workout"*, *"map my gym"*. Recognised **on the headset** (Vosk WASM, grammar-constrained), because the Quest browser has no speech recognition; nothing you say is uploaded. Every command is also a button on the board (point and pinch, or poke). |
+| **Re-map any time** | If tracking drifts or you move the bench mid-session, say *"map my gym"* (or pause and press RE-MAP). The workout freezes, you re-pin the station you are at, and it carries on from the same rep and second. |
+| **Rest previews** | Between exercises the board loops the *next* move while the rest clock runs, so you have seen it before it starts. |
+| **Screen & audio mode** | For Xreal glasses, a phone or a tablet: no instructor, no room tracking, no mapping. You get the coach's voice, voice commands and the exercise board full-screen on black (see-through on display glasses). Reps are paced by the coach's count since nothing tracks you. Pick the mode on the Train page. |
 | **Goals** | Pick a goal, level, session length and days per week. The coach sets a weekly target, builds each session from the gear you have (bench first), and applies progressive overload: a rep more each time, then the next dumbbell up. |
 
 ## Run
@@ -31,7 +34,7 @@ npm run dev:https    # self-signed HTTPS so a Quest on your LAN can enter XR
 npm run build        # static site in out/
 ```
 
-`dev` and `build` first fetch the speech runtime and its 40 MB model into `public/` (git-ignored; see `scripts/fetch-ears.mjs`). Pushing to `main` deploys to GitHub Pages via `.github/workflows/pages.yml` (enable Pages → "GitHub Actions"). Open the URL in the Quest browser, go to **Train**, and choose **Enter mixed reality**.
+`dev` and `build` first fetch the speech runtime and its 40 MB model into `public/` (git-ignored; see `scripts/fetch-ears.mjs`). Pushing to `main` deploys to GitHub Pages via `.github/workflows/pages.yml` (enable Pages → "GitHub Actions"). Open the URL in the Quest browser, go to **Train**, and choose **Enter mixed reality** — or, on Xreal glasses / a phone / a tablet, **Screen & audio**.
 
 Desktop preview keys: `Enter` start · `R` ready · `B` break · `S` skip · `D` done · `W` show me · `M` map · `E` end.
 
@@ -42,6 +45,7 @@ Verified here, in headless Chromium:
 - `npm test`: rep counter against simulated motion for every motion-tracked exercise, planner, full scripted sessions, mapping wizard, intent matching.
 - A whole passthrough session in Meta's WebXR emulator (IWER): `immersive-ar` entry, persistent anchor, mapping by pinch, station guidance, reps counted from emulated headset/hand motion (`tests/e2e/xr-emulated.cjs`).
 - Voice commands end to end with synthesized speech fed to a fake microphone.
+- Mid-workout re-map (workout resumes where it paused) and the screen-and-audio mode at phone and 1080p sizes.
 - All 42 poses rendered and checked by eye on both the human and the stickman (`/sheet`, `/sheet?human`).
 
 **Not yet tried on a physical Quest.** The real unknowns: hand tracking while gripping dumbbells (the fallback is the coach pacing the set), recognition accuracy and false triggers with real room noise, recogniser load time on the headset, and how the detection thresholds feel on real bodies.

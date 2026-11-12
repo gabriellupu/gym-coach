@@ -19,6 +19,8 @@ export interface HudView {
   step?: [number, number];
   next?: string;
   hint?: string;
+  /** Set when the on-board animation is a preview of something other than the current move. */
+  demoLabel?: string;
   /** Exercise the on-board demo should loop. */
   ex?: string;
   stats?: { label: string; value: string }[];
@@ -54,6 +56,10 @@ export interface Stage {
   pointer(): V3 | null;
   place(gear: GearId, p: Placement | null): void;
   calibrate(standH: number): void;
+  /** Is the trainee's head/hand motion being tracked? (Not in screen-and-audio mode.) */
+  tracked(): boolean;
+  /** Can equipment be pinned in the room in this mode? */
+  mappable(): boolean;
 }
 
 export class Skip extends Error {}

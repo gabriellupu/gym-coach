@@ -41,6 +41,9 @@ class FakeStage implements Stage {
   pointer() { return this.hand; }
   place(g: GearId, p: Placement | null) { this.placed[g] = p; }
   calibrate() {}
+  tracked() { return this.isTracked; }
+  mappable() { return true; }
+  isTracked = true;
 }
 
 test('a full session runs start to finish, counts reps and records progress', () => {
@@ -128,4 +131,29 @@ test('spoken phrases map to intents', () => {
   ];
   for (const [text, want] of cases) assert.equal(matchIntent(text), want, text);
   assert.ok(lineText('how-bench_press').length > 20);
+});
+
+test('between exercises the board previews the next move; untracked mode is paced by the coach', () => {
+  const profile = { ...defaultProfile(), goal: 'strength' as const, minutes: 20 };
+  const plan = buildPlan(profile, new Date('2026-03-02'));
+  const stage = new FakeStage();
+  stage.isTracked = false;
+  const w = new Workout(stage, profile, plan, () => {});
+  w.start();
+  const previews = new Set<string>();
+  for (let i = 0; !w.finished; i++) {
+    assert.ok(i < 30 * 60 * 60);
+    stage.t += 1 / 30;
+    if (stage.view.mode === 'ready' && i % 30 === 0) w.onIntent('ready');
+    w.update(1 / 30);
+    const v = stage.view;
+    if (v.mode === 'rest' && v.demoLabel) {
+      const upcoming = plan.steps.find((s) => ex(s.ex).name === v.demoLabel!.replace('Coming up: ', ''))!;
+      assert.equal(v.ex, upcoming.ex, 'board should loop the upcoming exercise');
+      previews.add(v.ex!);
+    }
+  }
+  assert.ok(previews.size >= 2, 'expected previews of upcoming exercises');
+  assert.ok(w.log.completed && !stage.said.includes('standtall'));
+  for (const s of plan.steps) for (const g of w.log.sets.filter((x) => x.ex === s.ex)) assert.equal(g.amount, s.amount);
 });

@@ -12,7 +12,7 @@ export const PHRASES: Record<Intent, string[]> = {
   harder: ['harder', 'too easy', 'make it harder'],
   status: ['how many', 'how many left', 'how long', 'how much longer'],
   start: ['start workout', 'start training', 'begin workout'],
-  map: ['map my gym', 'map the gym', 'set up my gym'],
+  map: ['map my gym', 'map the gym', 'set up my gym', 'map again', 'fix the mapping', 'map it again'],
   place: ['here', 'right here', 'place it here'],
 };
 
@@ -27,7 +27,7 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z' ]+/g, ' ').replace(/
 const LOOSE: [RegExp, Intent][] = [
   [/\b(end|stop|finish|quit)\b.*\b(workout|session|training)\b/, 'stop'],
   [/\b(start|begin)\b.*\b(workout|training|session)\b/, 'start'],
-  [/\bmap\b.*\bgym\b|\bset ?up\b.*\bgym\b/, 'map'],
+  [/\bre-?map\b|\bmap\b.*\b(gym|again|bench|bar|mat)\b|\bfix\b.*\bmapping\b|\bset ?up\b.*\bgym\b/, 'map'],
   [/\b(break|pause|breather|give me a (minute|second|sec)|hold on|time ?out|wait)\b/, 'break'],
   [/\b(too hard|easier|too heavy|too much)\b/, 'easier'],
   [/\b(too easy|harder|more reps)\b/, 'harder'],

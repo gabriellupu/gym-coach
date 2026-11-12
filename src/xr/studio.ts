@@ -14,10 +14,15 @@ import { saveProfile, weekGoal, type Profile } from '../domain/profile';
 import type { GearId, Placement } from '../domain/types';
 import type { BodyState, V3 } from '../motion/body';
 import { simulateBody } from '../motion/sim';
-import { Board } from './board';
+import { Board, BOARD_H, BOARD_W } from './board';
 import { Stations } from './stations';
 
-export type Mode = 'mr' | 'vr' | 'preview';
+/**
+ * mr / vr: the full experience in a headset. preview: the same scene on a flat screen with a
+ * simulated trainee. screen: audio coach plus the board only — for display glasses (Xreal),
+ * phones and tablets, where there is no room tracking, no instructor and no mapping.
+ */
+export type Mode = 'mr' | 'vr' | 'preview' | 'screen';
 type Spot = { pos: THREE.Vector3; yaw: number };
 type AnchorX = XRAnchor & { requestPersistentHandle?: () => Promise<string> };
 type SessionX = XRSession & { restorePersistentAnchor?: (h: string) => Promise<XRAnchor>; deletePersistentAnchor?: (h: string) => Promise<void> };
@@ -81,6 +86,8 @@ export class Studio implements Stage {
   private standH = 1.62;
   private freeStage: Spot = { pos: new THREE.Vector3(0, 0, -2.3), yaw: 0 };
   private pokeAt = 0;
+  private lastCoach: CoachCmd = { do: 'idle' };
+  private wakeLock: { release(): Promise<void> } | null = null;
   private look = { yaw: 0, pitch: -0.12 };
   private simT = 0;
   private disposed = false;
@@ -149,7 +156,7 @@ export class Studio implements Stage {
     }
     void this.audio.resume();
 
-    if (mode !== 'preview') {
+    if (mode === 'mr' || mode === 'vr') {
       const xr = navigator.xr;
       if (!xr) throw new Error('WebXR is not available in this browser.');
       const session = await xr.requestSession(mode === 'mr' ? 'immersive-ar' : 'immersive-vr', {
@@ -163,8 +170,17 @@ export class Studio implements Stage {
       this.restoreAnchor(session as SessionX);
     }
     this.stations.passthrough = mode === 'mr';
-    this.env.visible = mode !== 'mr';
-    this.renderer.setClearColor(0x0b0e14, mode === 'mr' ? 0 : 1);
+    const room = mode !== 'screen';
+    this.env.visible = mode === 'vr' || mode === 'preview';
+    this.figure.group.visible = this.stations.root.visible = room;
+    // Pure black is see-through on additive display glasses.
+    this.renderer.setClearColor(mode === 'screen' ? 0x000000 : 0x0b0e14, mode === 'mr' ? 0 : 1);
+    this.boardSnap = true;
+    if (mode === 'screen') {
+      // Keep the display awake through the session.
+      const wl = (navigator as Navigator & { wakeLock?: { request(t: 'screen'): Promise<{ release(): Promise<void> }> } }).wakeLock;
+      wl?.request('screen').then((l) => (this.wakeLock = l), () => {});
+    }
 
     if (this.profile.settings.mic && !this.ears) {
       const ears = new CommandEars(this.base);
@@ -183,6 +199,11 @@ export class Studio implements Stage {
     this.voice?.stop();
     this.ears?.stop();
     this.ears = null;
+    void this.wakeLock?.release().catch(() => {});
+    this.wakeLock = null;
+    this.figure.group.visible = this.stations.root.visible = true;
+    this.renderer.setClearColor(0x0b0e14, 1);
+    this.boardSnap = true;
     this.mode = 'preview';
     this.stations.passthrough = false;
     this.env.visible = true;
@@ -224,7 +245,7 @@ export class Studio implements Stage {
     const g = weekGoal(p);
     this.show(
       summary
-        ? { ...summary, buttons: ['start', 'map', 'stop'] }
+        ? { ...summary, buttons: this.hubButtons() }
         : {
             mode: 'hub',
             title: p.name ? `Hey ${p.name}` : 'Ready when you are',
@@ -234,15 +255,15 @@ export class Studio implements Stage {
               { label: 'Active minutes', value: `${g.minutesDone} / ${g.minutes}` },
               { label: 'Week streak', value: String(g.streak) },
             ],
-            hint: 'Say “start workout” or “map my gym”',
-            buttons: ['start', 'map', 'stop'],
+            hint: this.mappable() ? 'Say “start workout” or “map my gym”' : 'Say “start workout”',
+            buttons: this.hubButtons(),
           },
     );
     if (!summary) {
       this.coachCmd({ do: 'wave' });
       if (speak) {
         const mapped = GEAR_IDS.some((id) => p.gear[id].owned && p.gear[id].placement);
-        this.say(this.mode === 'mr' && !mapped ? 'hubunmapped' : 'hub');
+        this.say(!this.mappable() ? 'hubscreen' : this.mode === 'mr' && !mapped ? 'hubunmapped' : 'hub');
       }
     }
   }
@@ -253,6 +274,33 @@ export class Studio implements Stage {
     this.voice?.prepare(plan.steps.flatMap((s) => [`how-${s.ex}`, ...EXERCISES[s.ex].tips.map((_, i) => `tip-${s.ex}-${i + 1}`)]));
     const w = new Workout(this, this.profile, plan, (p) => this.persist(p));
     this.run(w, () => this.enterHub(false, this.view));
+  }
+
+  private hubButtons(): Intent[] {
+    return this.mappable() ? ['start', 'map', 'stop'] : ['start', 'stop'];
+  }
+
+  /**
+   * Mid-workout re-map: tracking can drift, or the bench gets moved. Freeze the
+   * session, re-pin the station in use (or everything), then carry on where we were.
+   */
+  private remap(w: Workout) {
+    const resume = this.onDone;
+    w.suspend();
+    this.voice?.stop();
+    this.stations.guide(null);
+    this.stations.showGhosts = true;
+    const owned = GEAR_IDS.filter((id) => this.profile.gear[id].owned);
+    const gear = w.station ? [w.station] : owned;
+    this.figure.play('idle', 0.22);
+    this.run(new Mapping(this, gear, { intro: 'remap', outro: 'remapdone' }), () => {
+      this.stations.showGhosts = false;
+      this.script = w;
+      this.onDone = resume;
+      this.station = null;
+      this.coachCmd(this.lastCoach); // put the coach back on the re-pinned equipment
+      w.unsuspend();
+    });
   }
 
   private startMapping() {
@@ -288,9 +336,13 @@ export class Studio implements Stage {
 
   /** One entry point for voice, board buttons, keyboard and tests. */
   intent(i: Intent) {
+    if (this.script instanceof Workout && i === 'map') {
+      if (this.mappable()) this.remap(this.script);
+      return;
+    }
     if (this.script) return this.script.onIntent(i);
     if (i === 'start' || i === 'ready') this.startWorkout();
-    else if (i === 'map') this.startMapping();
+    else if (i === 'map' && this.mappable()) this.startMapping();
     else if (i === 'stop') this.exit();
   }
 
@@ -332,12 +384,13 @@ export class Studio implements Stage {
     return c;
   }
   coach(cmd: CoachCmd) {
+    this.lastCoach = cmd;
     this.coachCmd(cmd);
   }
   distanceTo(gear: GearId): number | null {
     const f = this.stations.frame(gear);
     if (!f.mapped && this.mode === 'mr') return null;
-    if (this.mode === 'preview') return null;
+    if (this.mode === 'preview' || this.mode === 'screen') return null;
     const p = this.stations.world(gear);
     return Math.hypot(p.x - this.head.x, p.z - this.head.z);
   }
@@ -371,6 +424,12 @@ export class Studio implements Stage {
   }
   calibrate(standH: number) {
     this.standH = standH;
+  }
+  tracked() {
+    return this.mode !== 'screen';
+  }
+  mappable() {
+    return this.mode !== 'screen';
   }
 
   // ───────────── The coach's whereabouts ─────────────
@@ -585,7 +644,7 @@ export class Studio implements Stage {
     const down = (ev: PointerEvent) => (drag = { x: ev.clientX, y: ev.clientY, moved: false });
     const move = (ev: PointerEvent) => {
       if (this.session) return;
-      if (drag && ev.buttons) {
+      if (drag && ev.buttons && this.mode !== 'screen') {
         const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
         if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
         this.look.yaw -= dx * 0.004;
@@ -596,7 +655,7 @@ export class Studio implements Stage {
       this.board.hover([this.board.hit(ray(ev))?.intent ?? null], 1);
     };
     const up = (ev: PointerEvent) => {
-      if (this.session || drag?.moved) return;
+      if (this.session || (drag?.moved && this.mode !== 'screen')) return;
       const hit = this.board.hit(ray(ev));
       if (hit) this.intent(hit.intent);
       else if (this.script) this.script.onPoint(this.previewPoint());
@@ -651,10 +710,23 @@ export class Studio implements Stage {
     }
 
     this.stations.update(dt, this.head);
-    this.placeBoard(dt);
+    if (this.mode === 'screen') this.fitBoard();
+    else this.placeBoard(dt);
     this.board.update(dt, this.renderer);
     this.updateConfetti(dt);
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /** Screen-and-audio mode: the board alone, filling the display. */
+  private fitBoard() {
+    const h = BOARD_H + 0.19, w = BOARD_W + 0.04;
+    const t = Math.tan((this.camera.fov * Math.PI) / 360);
+    const d = Math.max(h / 2 / t, w / 2 / (t * this.camera.aspect)) * 1.03;
+    this.board.group.position.set(0, 0, 0);
+    this.board.group.quaternion.identity();
+    this.board.group.scale.setScalar(1);
+    this.camera.position.set(0, -0.08, d);
+    this.camera.rotation.set(0, 0, 0);
   }
 
   /** The board stays beside the coach, or drifts into view when you're on the bench, the floor or the move. */

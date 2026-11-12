@@ -110,7 +110,7 @@ export class Board {
       const mesh = new THREE.Mesh(new THREE.PlaneGeometry(bw, bh), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
       mesh.position.set((i - (n - 1) / 2) * (bw + gap), -BOARD_H / 2 - bh / 2 - 0.03, 0.01);
       mesh.renderOrder = 12;
-      const label = intent === 'stop' && (v.mode === 'hub' || v.mode === 'summary') ? 'EXIT' : intent === 'done' && v.mode === 'mapping' ? 'FINISH' : intent === 'ready' && v.mode === 'rest' ? 'SKIP REST' : LABEL[intent];
+      const label = intent === 'map' && v.mode !== 'hub' && v.mode !== 'summary' ? 'RE-MAP' : intent === 'stop' && (v.mode === 'hub' || v.mode === 'summary') ? 'EXIT' : intent === 'done' && v.mode === 'mapping' ? 'FINISH' : intent === 'ready' && v.mode === 'rest' ? 'SKIP REST' : LABEL[intent];
       const b: Button = { intent, mesh, ctx: c.getContext('2d')!, tex, hover: -1, label };
       this.buttons.push(b);
       this.group.add(mesh);
@@ -315,12 +315,6 @@ export class Board {
       g.fillText(v.hint, cx, 556);
       g.textAlign = 'left';
     }
-    if (v.next && hasDemo && v.mode !== 'rest') {
-      g.fillStyle = COL.dim;
-      g.font = `500 22px ${FONT}`;
-      g.fillText(`Next: ${v.next}`, DEMO.x + 22, DEMO.y + DEMO.s - 20);
-    }
-
     // Caption strip + mic status.
     g.fillStyle = 'rgba(120,140,170,0.14)';
     g.beginPath();

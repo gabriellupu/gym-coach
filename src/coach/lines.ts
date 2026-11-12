@@ -93,6 +93,10 @@ const SINGLES: Record<string, string> = {
   mapbad: "Those two points don't look right. Let's try that one again.",
   mapskip: 'Okay, skipped.',
   mapdone: 'All mapped. Now I know my way around.',
+  remap: "Okay, let's fix that. I've paused the workout.",
+  remapdone: 'Much better. Back to the workout.',
+  hubscreen: "Say, start workout, when you're ready.",
+  comingup: 'Coming up next.',
 };
 
 function build(): Record<string, string> {

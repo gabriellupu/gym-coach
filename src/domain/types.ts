@@ -47,6 +47,11 @@ export interface Exercise {
   detect: Detect;
   hold?: HoldCheck;
   perSide?: boolean;
+  /**
+   * Awkward with a headset on: jumping (it bounces on your face) or lying flat on your back
+   * (you are lying on the strap). Left out of headset sessions; fine in screen-and-audio mode.
+   */
+  noHeadset?: boolean;
   load?: LoadClass;
   met: number;
   /** Spoken set-up and execution, one or two sentences. */

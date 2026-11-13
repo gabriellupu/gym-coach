@@ -297,6 +297,20 @@ export const ANIMS: Record<string, (c: Ctx) => Anim> = {
     };
     return { cam: 50, keys: [[0, p(1, 0)], [0.25, p(1, 0.05)], [0.5, p(-1, 0)], [0.75, p(-1, 0.05)]] };
   },
+  march: () => {
+    const p = (s: 1 | -1): Pose => {
+      const up: Limb = { raise: 62, bend: 78 };
+      const dn: Limb = { raise: 0, bend: 4 };
+      const fwd: Limb = { raise: 38, bend: 70, out: 6 };
+      const bk: Limb = { raise: -22, bend: 60, out: 6 };
+      return { pos: [0, ST - 0.015, 0], ground: 0, legL: s > 0 ? up : dn, legR: s > 0 ? dn : up, armL: s > 0 ? bk : fwd, armR: s > 0 ? fwd : bk };
+    };
+    return { cam: 50, keys: [[0, p(1)], [0.5, p(-1)]] };
+  },
+  squat_reach: () => ({
+    cam: 40,
+    keys: cycle({ pos: [0, ST - 0.005, 0], ...kneesOut, ...arms({ raise: 172, out: 10, bend: 6 }) }, { pos: [0, 0.56, -0.22], pitch: 26, spine: -6, ...kneesOut, ...arms({ raise: 105, out: 6, bend: 12 }) }),
+  }),
   arm_circles: () => {
     const p = (raise: number, out: number): Pose => stand(arms({ raise, out, bend: 4 }));
     return { cam: 30, keys: [[0, p(0, 104)], [0.25, p(16, 90)], [0.5, p(0, 76)], [0.75, p(-16, 90)]] };

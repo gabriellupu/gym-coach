@@ -27,6 +27,7 @@ export default function Library() {
             <span className="chip">{e.gear.length ? e.gear.map((g) => GEAR[g].name.replace('Adjustable b', 'B')).join(' + ') : 'Bodyweight'}</span>
           </div>
           {e.bench !== undefined && <p className="dim">Backrest: {e.bench === 0 ? 'flat' : `${e.bench}°`}</p>}
+          {e.noHeadset && <p className="fine">Screen &amp; audio mode only — left out of headset sessions (jumping, or lying flat on the strap).</p>}
           <p>{e.how}</p>
           <ul className="tips">
             {e.tips.map((t) => (
@@ -49,6 +50,7 @@ export default function Library() {
                 <b>{x.name}</b>
                 <small>
                   {x.group} · {x.role === 'main' ? ['', 'easy', 'medium', 'hard'][x.level] : x.role}
+                  {x.noHeadset ? ' · screen only' : ''}
                 </small>
               </button>
             ))}

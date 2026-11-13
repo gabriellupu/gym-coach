@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ex } from '@/domain/exercises';
 import { GEAR, GEAR_IDS } from '@/domain/gear';
 import { buildPlan } from '@/domain/planner';
@@ -11,7 +11,10 @@ import { useProfile } from '@/ui/useProfile';
 
 export default function Home() {
   const { profile, ready } = useProfile();
-  const plan = useMemo(() => buildPlan(profile), [profile]);
+  // In a headset the plan leaves out jumping and flat-on-your-back moves.
+  const [headset, setHeadset] = useState(true);
+  useEffect(() => setHeadset('xr' in navigator), []);
+  const plan = useMemo(() => buildPlan(profile, new Date(), { headset }), [profile, headset]);
   const goal = weekGoal(profile);
   const main = plan.steps.filter((s) => s.role === 'main');
   const hero = (main.find((s) => ex(s.ex).gear.includes('bench')) ?? main[0])?.ex ?? 'bench_press';

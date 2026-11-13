@@ -2,7 +2,7 @@
 
 A mixed-reality fitness instructor that runs in the **Meta Quest browser** (WebXR, no install). You tell it what equipment you own, pin that equipment in your own room, and a human coach demonstrates every exercise **on your actual bench / under your actual pull-up bar** in passthrough, then counts your reps from how you move and talks you through the session.
 
-V1 covers an **adjustable bench** (the centrepiece), **dumbbells**, a **mat**, a **pull-up bar** and bodyweight work: 42 exercises.
+V1 covers an **adjustable bench** (the centrepiece), **dumbbells**, a **mat**, a **pull-up bar** and bodyweight work: 44 exercises, 33 of them used in the headset.
 
 | | |
 | --- | --- |
@@ -14,6 +14,7 @@ V1 covers an **adjustable bench** (the centrepiece), **dumbbells**, a **mat**, a
 | **Re-map any time** | If tracking drifts or you move the bench mid-session, say *"map my gym"* (or pause and press RE-MAP). The workout freezes, you re-pin the station you are at, and it carries on from the same rep and second. |
 | **Rest previews** | Between exercises the board loops the *next* move while the rest clock runs, so you have seen it before it starts. |
 | **Screen & audio mode** | For Xreal glasses, a phone or a tablet: no instructor, no room tracking, no mapping. You get the coach's voice, voice commands and the exercise board full-screen on black (see-through on display glasses). Reps are paced by the coach's count since nothing tracks you. Pick the mode on the Train page. |
+| **Headset-friendly plans** | Jumping moves (jumping jacks, high knees, burpees) and anything flat on your back (flat bench press, fly, pullover, lying triceps extension, hip thrust, crunches, leg raises, glute bridge) are left out of mixed-reality and VR sessions: the headset bounces on your face or you end up lying on the strap. They stay in the library and are used in Screen & audio mode. |
 | **Goals** | Pick a goal, level, session length and days per week. The coach sets a weekly target, builds each session from the gear you have (bench first), and applies progressive overload: a rep more each time, then the next dumbbell up. |
 
 ## Run

@@ -241,7 +241,7 @@ export class Studio implements Stage {
     this.stations.guide(null);
     this.stations.showGhosts = false;
     const p = this.profile;
-    const plan = buildPlan(p);
+    const plan = this.plan();
     const g = weekGoal(p);
     this.show(
       summary
@@ -270,10 +270,15 @@ export class Studio implements Stage {
 
   private startWorkout() {
     this.voice?.stop();
-    const plan = buildPlan(this.profile);
+    const plan = this.plan();
     this.voice?.prepare(plan.steps.flatMap((s) => [`how-${s.ex}`, ...EXERCISES[s.ex].tips.map((_, i) => `tip-${s.ex}-${i + 1}`)]));
     const w = new Workout(this, this.profile, plan, (p) => this.persist(p));
     this.run(w, () => this.enterHub(false, this.view));
+  }
+
+  /** Headset sessions skip jumping and flat-on-your-back moves; screen mode gets the full library. */
+  private plan() {
+    return buildPlan(this.profile, new Date(), { headset: this.mode !== 'screen' });
   }
 
   private hubButtons(): Intent[] {

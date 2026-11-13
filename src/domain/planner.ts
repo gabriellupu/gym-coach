@@ -25,7 +25,9 @@ const SHAPE: Record<Goal, { sets: [number, number, number]; rest: number; focus:
   mobility: { sets: [2, 2, 2], rest: 30, focus: 'Mobility & core' },
 };
 
-export function available(e: Exercise, p: Profile): boolean {
+/** Can this trainee do this move? `headset` also drops moves that are miserable in a headset. */
+export function available(e: Exercise, p: Profile, headset = false): boolean {
+  if (headset && e.noHeadset) return false;
   if (!e.gear.every((g) => p.gear[g]?.owned)) return false;
   if (e.bench && !p.gear.bench.adjustable) return false;
   return true;
@@ -77,9 +79,9 @@ function dose(e: Exercise, p: Profile): { amount: number; loadKg?: number } {
 
 const STATION_ORDER = ['pullup_bar', 'bench', 'dumbbells', 'mat', 'none'];
 
-export function buildPlan(p: Profile, now = new Date()): Plan {
+export function buildPlan(p: Profile, now = new Date(), opts: { headset?: boolean } = {}): Plan {
   const rand = rng(`${now.toISOString().slice(0, 10)}:${p.history.length}:${p.goal}`);
-  const pool = EXERCISE_LIST.filter((e) => available(e, p));
+  const pool = EXERCISE_LIST.filter((e) => available(e, p, opts.headset));
   const last = new Set(p.history.at(-1)?.sets.map((s) => s.ex) ?? []);
   const shape = SHAPE[p.goal];
   const sets = shape.sets[p.level - 1];

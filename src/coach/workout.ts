@@ -38,6 +38,20 @@ export class Workout extends Script {
 
   private closing = false;
 
+  /** The mapped station the trainee is working at right now. */
+  get station(): GearId | null {
+    return this.at;
+  }
+
+  /** Freeze the session while something else (a re-map) takes over the stage. */
+  suspend() {
+    this.paused = true;
+  }
+  unsuspend() {
+    this.paused = false;
+    this.stage.show(this.view);
+  }
+
   onIntent(i: Intent) {
     if (this.finished || this.closing) return;
     if (this.paused) {
@@ -56,7 +70,7 @@ export class Workout extends Script {
         this.paused = true;
         this.stage.say('break', { mode: 'cut' });
         this.stage.coach({ do: 'idle' });
-        this.stage.show({ mode: 'paused', title: 'Paused', sub: 'Take your time.', hint: 'Say “I’m ready” to continue', buttons: ['ready', 'stop'] });
+        this.stage.show({ mode: 'paused', title: 'Paused', sub: 'Take your time.', hint: 'Say “I’m ready” to continue', buttons: this.stage.mappable() ? ['ready', 'map', 'stop'] : ['ready', 'stop'] });
         return;
       case 'skip':
         return this.interrupt(new Skip());
@@ -119,14 +133,16 @@ export class Workout extends Script {
     try {
       yield* this.speak(first ? 'intro' : pick('hello'));
       yield* this.speak(['today', 'about', num(this.plan.minutes), 'minutes']);
-      // Standing height scales every range-of-motion threshold to this person.
-      yield* this.speak('standtall');
-      const ys: number[] = [];
-      const end = this.t + 1.2;
-      while (this.t < end) ys.push(this.stage.body().head.y), yield;
-      const h = ys.sort((a, b) => a - b)[ys.length >> 1];
-      if (h > 1.1 && h < 2.2) this.stage.calibrate(h);
-      yield* this.speak('gotit');
+      if (this.stage.tracked()) {
+        // Standing height scales every range-of-motion threshold to this person.
+        yield* this.speak('standtall');
+        const ys: number[] = [];
+        const end = this.t + 1.2;
+        while (this.t < end) ys.push(this.stage.body().head.y), yield;
+        const h = ys.sort((a, b) => a - b)[ys.length >> 1];
+        if (h > 1.1 && h < 2.2) this.stage.calibrate(h);
+        yield* this.speak('gotit');
+      }
     } catch (e) {
       if (!(e instanceof Skip) && !(e instanceof Repeat)) throw e; // "skip" here just skips the talking
     }
@@ -199,7 +215,7 @@ export class Workout extends Script {
     const next = this.plan.steps[this.stepIdx + 1];
     if (next && step.role === 'main') {
       try {
-        yield* this.rest(Math.round(step.rest * 0.6), `Next: ${ex(next.ex).name}`, e, step);
+        yield* this.rest(Math.round(step.rest * 0.6), '', e, step, next);
       } catch (err) {
         if (!(err instanceof Repeat)) throw err;
       }
@@ -311,7 +327,8 @@ export class Workout extends Script {
       else if (!said.tip && count === 2 + ((set + this.stepIdx) % 2) && step.amount >= 6) (said.tip = true), this.stage.say([call(count), `tip-${e.id}-${((set + this.stepIdx) % e.tips.length) + 1}`], { mode: 'cut' });
       else this.stage.say(call(count), { mode: 'ifFree' });
     };
-    let counter = e.detect.by === 'motion' ? new RepCounter(e.detect, onRep) : null;
+    // Without tracking (screen-and-audio mode) every set is paced by the coach's count.
+    let counter = e.detect.by === 'motion' && this.stage.tracked() ? new RepCounter(e.detect, onRep) : null;
     let nextBeat = this.t + e.tempo;
     if (!counter) this.stage.say('followme');
     this.live = { left: () => step.amount - count, unit: 'reps' };
@@ -354,9 +371,10 @@ export class Workout extends Script {
   }
 
   private *clock(e: Exercise, step: Step, set: number): Co<number> {
-    const watch = e.kind === 'hold' && e.hold ? new HoldWatch(e.hold) : null;
+    const tracked = this.stage.tracked();
+    const watch = tracked && e.kind === 'hold' && e.hold ? new HoldWatch(e.hold) : null;
     let moves = 0;
-    const counter = e.detect.by === 'motion' ? new RepCounter(e.detect, () => (moves++, this.log.reps++)) : null;
+    const counter = tracked && e.detect.by === 'motion' ? new RepCounter(e.detect, () => (moves++, this.log.reps++)) : null;
     let elapsed = 0;
     let lastWhole = -1;
     let wasIn = true;
@@ -401,11 +419,14 @@ export class Workout extends Script {
     return Math.round(elapsed);
   }
 
-  private *rest(seconds: number, label: string, e: Exercise, step: Step): Co {
+  /** Rest between sets, or (given `next`) between exercises with a preview of what is coming. */
+  private *rest(seconds: number, label: string, e: Exercise, step: Step, next?: Step): Co {
     if (seconds < 3) return;
+    const ne = next ? ex(next.ex) : null;
     this.stage.coach({ do: 'idle' });
     this.flags.ready = false;
     if (seconds >= 20) this.stage.say(['rest', num(seconds), 'usecs']);
+    if (ne && seconds >= 12) this.stage.say(['comingup', `x-${ne.id}`]);
     let said10 = false;
     let tip = seconds >= 40;
     const end = this.t + seconds;
@@ -417,7 +438,9 @@ export class Workout extends Script {
       }
       if (left <= 10 && !said10 && seconds >= 25) (said10 = true), this.stage.say('rest10');
       if (tip && left < seconds - 12) (tip = false), this.stage.say(pick('resttip'), { mode: 'ifFree' });
-      this.show({ ...this.base(e, step, 'rest'), title: 'Rest', sub: label, big: String(Math.ceil(left)), unit: 'seconds', progress: 1 - left / seconds, hint: 'Say “I’m ready” to skip the rest', buttons: ['ready', 'break', 'skip', 'stop'] });
+      // Between exercises the board already loops the next move, so it is familiar before it starts.
+      const preview = ne && next ? { ex: ne.id, sub: `Coming up: ${ne.name} · ${fmtAmount(ne, next)}`, demoLabel: `Coming up: ${ne.name}` } : { sub: label };
+      this.show({ ...this.base(e, step, 'rest'), title: 'Rest', ...preview, big: String(Math.ceil(left)), unit: 'seconds', progress: 1 - left / seconds, hint: 'Say “I’m ready” to skip the rest', buttons: ['ready', 'break', 'skip', 'stop'] });
       yield;
     }
   }

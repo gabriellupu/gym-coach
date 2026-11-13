@@ -19,6 +19,8 @@ export class Mapping extends Script {
   constructor(
     stage: Stage,
     private gear: GearId[],
+    /** Lines to open and close with; a mid-workout re-map uses shorter ones. */
+    private say: { intro: string; outro: string } = { intro: 'mapintro', outro: 'mapdone' },
   ) {
     super(stage);
   }
@@ -60,7 +62,7 @@ export class Mapping extends Script {
       this.stage.coach({ do: 'idle' });
       this.stage.show({ mode: 'mapping', title: 'Map your gym', sub: 'Show the coach where everything is', buttons: ['skip', 'done'] });
       try {
-        yield* this.speak('mapintro');
+        yield* this.speak(this.say.intro);
       } catch (e) {
         if (!(e instanceof Skip)) throw e;
         this.stage.hush();
@@ -92,7 +94,7 @@ export class Mapping extends Script {
         }
       }
       this.stage.celebrate();
-      yield* this.speak('mapdone');
+      yield* this.speak(this.say.outro);
     } catch (e) {
       if (!(e instanceof End)) throw e;
       this.stage.hush();

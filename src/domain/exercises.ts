@@ -15,6 +15,7 @@ const LIST: Exercise[] = [
   // ───────────── Bench + dumbbells ─────────────
   {
     id: 'bench_press', name: 'Dumbbell bench press', gear: [B, D], bench: 0, kind: 'reps', group: 'push', role: 'main', level: 1, posture: 'supine',
+    noHeadset: true,
     tempo: 3, dose: [8, 10, 12], detect: motion('handsY', 1, 0.11), load: 'heavy', met: 5,
     how: 'Lie back on the bench, feet planted, dumbbells over your chest. Lower them to chest level with elbows at forty five degrees, then press straight up.',
     tips: ['Shoulder blades pinned back.', 'Feet stay planted.', 'Control the way down.'],
@@ -27,6 +28,7 @@ const LIST: Exercise[] = [
   },
   {
     id: 'db_fly', name: 'Dumbbell fly', gear: [B, D], bench: 0, kind: 'reps', group: 'push', role: 'main', level: 2, posture: 'supine',
+    noHeadset: true,
     tempo: 3.5, dose: [8, 10, 12], detect: motion('handsSpread', 1, 0.3), load: 'light', met: 4,
     how: 'Lie back with the dumbbells above your chest, palms facing each other. Open your arms wide with a soft bend in the elbows, then squeeze them back together.',
     tips: ['Soft elbows.', 'Feel the stretch across the chest.', 'Squeeze at the top.'],
@@ -45,12 +47,14 @@ const LIST: Exercise[] = [
   },
   {
     id: 'skull_crusher', name: 'Lying triceps extension', gear: [B, D], bench: 0, kind: 'reps', group: 'push', role: 'main', level: 2, posture: 'supine',
+    noHeadset: true,
     tempo: 3, dose: [8, 10, 12], detect: motion('handsY', -1, 0.1), load: 'light', met: 3.5,
     how: 'Lie back with the dumbbells straight above your shoulders. Keep your upper arms still and bend the elbows to lower the weights beside your head, then extend.',
     tips: ['Elbows point at the ceiling.', 'Only the forearms move.', 'Squeeze the triceps.'],
   },
   {
     id: 'pullover', name: 'Dumbbell pullover', gear: [B, D], bench: 0, kind: 'reps', group: 'pull', role: 'main', level: 2, posture: 'supine',
+    noHeadset: true,
     tempo: 3.5, dose: [8, 10, 12], detect: motion('handsY', -1, 0.13), load: 'medium', met: 4,
     how: 'Lie back holding one dumbbell with both hands above your chest. With a slight bend in the elbows, lower it in an arc behind your head, then pull it back over your chest.',
     tips: ['Ribs down.', 'Long arms, soft elbows.', 'Feel the lats stretch.'],
@@ -69,6 +73,7 @@ const LIST: Exercise[] = [
   },
   {
     id: 'hip_thrust', name: 'Hip thrust', gear: [B], bench: 0, kind: 'reps', group: 'legs', role: 'main', level: 1, posture: 'supine',
+    noHeadset: true,
     tempo: 2.8, dose: [10, 12, 15], detect: tempo, met: 4,
     how: 'Sit on the floor with your shoulder blades against the edge of the bench, feet flat. Drive your hips up until your body is level, squeeze, and lower.',
     tips: ['Chin tucked.', 'Squeeze the glutes at the top.', 'Shins vertical.'],
@@ -161,24 +166,28 @@ const LIST: Exercise[] = [
   },
   {
     id: 'burpee', name: 'Burpees', gear: [M], kind: 'reps', group: 'cardio', role: 'main', level: 3, posture: 'stand',
+    noHeadset: true,
     tempo: 3.4, dose: [6, 8, 12], detect: motion('headY', -1, 0.3), met: 9,
     how: 'Squat down, hands on the floor, jump your feet back to a plank, jump them in again, and explode up with a jump.',
     tips: ['Find a rhythm.', 'Land soft.', 'Keep breathing.'],
   },
   {
     id: 'crunch', name: 'Crunches', gear: [M], kind: 'reps', group: 'core', role: 'main', level: 1, posture: 'supine',
+    noHeadset: true,
     tempo: 2.2, dose: [12, 15, 20], detect: motion('headY', 1, 0.04), met: 3.5,
     how: 'Lie on your back, knees bent, fingertips by your ears. Curl your shoulders off the mat, breathe out at the top, and lower slowly.',
     tips: ['Chin off your chest.', 'Breathe out as you come up.', 'Lower back stays down.'],
   },
   {
     id: 'leg_raise', name: 'Lying leg raises', gear: [M], kind: 'reps', group: 'core', role: 'main', level: 2, posture: 'supine',
+    noHeadset: true,
     tempo: 3, dose: [8, 12, 15], detect: tempo, met: 3.5,
     how: 'Lie flat with your hands under your hips. Lift straight legs to vertical, then lower them slowly without letting your heels touch the floor.',
     tips: ['Press your lower back down.', 'Slow on the way down.', 'Legs long.'],
   },
   {
     id: 'glute_bridge', name: 'Glute bridge', gear: [M], kind: 'reps', group: 'legs', role: 'main', level: 1, posture: 'supine',
+    noHeadset: true,
     tempo: 2.6, dose: [12, 15, 20], detect: tempo, met: 3.5,
     how: 'Lie on your back, knees bent, feet close to your hips. Drive through your heels to lift your hips, squeeze for a beat, and lower.',
     tips: ['Squeeze at the top.', 'Drive through the heels.', 'Ribs down.'],
@@ -223,12 +232,14 @@ const LIST: Exercise[] = [
   // ───────────── Warm-up ─────────────
   {
     id: 'jumping_jack', name: 'Jumping jacks', gear: [], kind: 'timed', group: 'cardio', role: 'warmup', level: 1, posture: 'stand',
+    noHeadset: true,
     tempo: 1, dose: [30, 40, 45], detect: motion('handsY', 1, 0.25), met: 8,
     how: 'Jump your feet wide as your hands go overhead, then jump back together. Nice and light.',
     tips: ['Light on your feet.', 'Arms all the way up.', 'Stay loose.'],
   },
   {
     id: 'high_knees', name: 'High knees', gear: [], kind: 'timed', group: 'cardio', role: 'warmup', level: 1, posture: 'stand',
+    noHeadset: true,
     tempo: 0.7, dose: [25, 30, 40], detect: tempo, met: 8,
     how: 'Run on the spot, driving your knees up to hip height and pumping your arms.',
     tips: ['Knees up.', 'Pump the arms.', 'Stay tall.'],
@@ -244,6 +255,18 @@ const LIST: Exercise[] = [
     tempo: 1.8, dose: [25, 30, 30], detect: tempo, met: 2.5,
     how: 'Feet wide, arms relaxed. Rotate your upper body left and right, letting your arms swing and your back heel lift.',
     tips: ['Let the hips turn.', 'Stay relaxed.'],
+  },
+  {
+    id: 'march', name: 'March on the spot', gear: [], kind: 'timed', group: 'cardio', role: 'warmup', level: 1, posture: 'stand',
+    tempo: 1.1, dose: [30, 40, 45], detect: tempo, met: 4,
+    how: 'March on the spot, lifting your knees to a comfortable height and swinging your arms. Both feet never leave the floor together.',
+    tips: ['Stand tall.', 'Swing the arms.'],
+  },
+  {
+    id: 'squat_reach', name: 'Squat and reach', gear: [], kind: 'timed', group: 'legs', role: 'warmup', level: 1, posture: 'stand',
+    tempo: 2.6, dose: [30, 35, 40], detect: motion('headY', -1, 0.1), met: 4.5,
+    how: 'Sit into an easy squat, then stand up and reach both arms overhead. Smooth and steady.',
+    tips: ['Heels down.', 'Reach tall at the top.'],
   },
   // ───────────── Cool-down ─────────────
   {

@@ -57,7 +57,7 @@ export default function Train() {
         <div className="gate">
           <div className="card gatecard">
             <p className="eyebrow">Gym Coach</p>
-            <h1>Ready to train?</h1>
+            <h1>How are you training today?</h1>
             <p className="lede">Clear a little space, put the headset on, and allow the microphone so you can talk to Max.</p>
             <div className="col">
               <button className="btn primary big" disabled={!support.mr || !loaded} onClick={() => enter('mr')}>
@@ -67,6 +67,10 @@ export default function Train() {
               <button className="btn big" disabled={!support.vr || !loaded} onClick={() => enter('vr')}>
                 Enter VR
                 <small>{support.vr ? 'A virtual studio' : 'Needs a VR headset'}</small>
+              </button>
+              <button className="btn big" disabled={!loaded} onClick={() => enter('screen')}>
+                Screen &amp; audio
+                <small>Xreal glasses, phone or tablet — the coach’s voice and the exercise board, no room tracking</small>
               </button>
               <button className="btn big" disabled={!loaded} onClick={() => enter('preview')}>
                 Preview on this screen
@@ -83,9 +87,9 @@ export default function Train() {
           </div>
         </div>
       )}
-      {mode === 'preview' && (
+      {(mode === 'preview' || mode === 'screen') && (
         <button className="btn small leave" onClick={() => studio.current?.exit()}>
-          Exit preview
+          Exit
         </button>
       )}
     </div>

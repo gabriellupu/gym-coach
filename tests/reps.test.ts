@@ -61,3 +61,21 @@ test('plans fit the time budget, only use owned gear, and lead with the bench', 
   const plan = buildPlan(p);
   for (const s of plan.steps) assert.ok(available(EXERCISE_LIST.find((e) => e.id === s.ex)!, p), s.ex);
 });
+
+test('headset sessions never include jumping or flat-on-your-back moves, at any goal or length', () => {
+  const banned = EXERCISE_LIST.filter((e) => e.noHeadset).map((e) => e.id);
+  assert.ok(['jumping_jack', 'high_knees', 'burpee', 'bench_press', 'crunch', 'glute_bridge', 'hip_thrust'].every((id) => banned.includes(id)));
+  for (const goal of ['strength', 'lean', 'fit', 'mobility'] as const)
+    for (const minutes of [15, 30, 45])
+      for (let day = 1; day <= 12; day++) {
+        const p = { ...defaultProfile(), goal, minutes, level: 2 as const };
+        const plan = buildPlan(p, new Date(2026, 2, day), { headset: true });
+        for (const s of plan.steps) assert.ok(!banned.includes(s.ex), `${goal}/${minutes}: ${s.ex}`);
+        assert.ok(plan.steps.filter((s) => s.role === 'warmup').length >= 2);
+        assert.ok(plan.steps.filter((s) => s.role === 'main').length >= 2);
+      }
+  // Screen mode still gets them.
+  const seen = new Set<string>();
+  for (let day = 1; day <= 30; day++) for (const s of buildPlan({ ...defaultProfile(), minutes: 30 }, new Date(2026, 2, day)).steps) seen.add(s.ex);
+  assert.ok(banned.some((id) => seen.has(id)));
+});

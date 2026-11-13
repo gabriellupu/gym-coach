@@ -72,6 +72,7 @@ const URL = process.env.APP_URL ?? 'http://localhost:3111';
     let t = 0;
     setInterval(() => {
       const s = window.__studio, v = s.debug.view;
+      if (v?.mode === 'mapping') return; // hands are busy pinching
       const tempo = { work: 2.2 }[v?.mode] ?? 0;
       t = tempo ? t + 0.03 / tempo : 0;
       const body = s.simulate(t);
@@ -101,6 +102,25 @@ const URL = process.env.APP_URL ?? 'http://localhost:3111';
         if (s.mode === 'work' || s.mode === 'demo') await p.waitForTimeout(2600);
         await p.screenshot({ path: `${out}/xr-${s.mode}-${s.ex ?? 'x'}.png` });
       }
+    }
+    // Once, mid-set: the mapping has "drifted" — re-map without losing the workout.
+    if (s.mode === 'work' && !seen.has('remap')) {
+      seen.add('remap');
+      await p.evaluate(() => window.__studio.intent('map'));
+      await p.waitForFunction(() => window.__studio.debug.view?.mode === 'mapping');
+      console.log('remap started', JSON.stringify(await dbg()));
+      for (let i = 0; i < 80; i++) {
+        const m = await dbg();
+        if (m.mode !== 'mapping') break;
+        const key = Object.keys(points).find((k) => m.title.includes(k));
+        if (key && /Touch/.test(m.sub ?? '')) await pinchAt(...points[key][m.big?.startsWith('2') ? 1 : 0].map((v, i) => v + (i === 0 ? 0.3 : 0)));
+        await p.waitForTimeout(500);
+      }
+      const after = await dbg();
+      console.log('remap done, workout resumed at', JSON.stringify(after));
+      if (after.mode === 'mapping' || after.title !== s.title) throw new Error('workout did not resume after re-map');
+      const moved = await p.evaluate(() => JSON.parse(localStorage.getItem('gym-coach:v1')).gear.bench.placement.a[0]);
+      console.log('bench x after re-map', moved.toFixed(2));
     }
     if (s.mode === 'summary') break;
     // Keep the run short: once a main set has been seen through, skip ahead.
